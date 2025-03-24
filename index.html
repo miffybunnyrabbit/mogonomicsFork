@@ -114,31 +114,13 @@
       </table>
       <form>
          <p><strong>Select a percentage:</strong></p>
-         
-         <label>
-           <input type="radio" name="percentage" value="1">
-           1%
-         </label><br>
-       
-         <label>
-           <input type="radio" name="percentage" value="2">
-           2%
-         </label><br>
-       
-         <label>
-           <input type="radio" name="percentage" value="5">
-           5%
-         </label><br>
-       
-         <label>
-           <input type="radio" name="percentage" value="10" checked>
-           10%
-         </label><br>
-       
-         <label>
-           <input type="radio" name="percentage" value="20">
-           20%
-         </label>
+         <select id="percentageSelect">
+            <option value="1">1%</option>
+            <option value="2">2%</option>
+            <option value="5">5%</option>
+            <option value="10" selected>10%</option>
+            <option value="20">20%</option>
+          </select>
        </form>
        
        
@@ -294,17 +276,16 @@
             });
          };
 
-         document.querySelectorAll('input[name="percentage"]').forEach(radio => {
-         radio.addEventListener('change', async () => {
-            choice = parseFloat(radio.value);
-            const tokenSelect = document.getElementById("tokenSelect");
-            const selectedToken = tokens[tokenSelect.value];
-            const cgID = selectedToken?.cgID || 'mog';
+         document.getElementById('percentageSelect').addEventListener('change', async (e) => {
+         choice = parseFloat(e.target.value);
+         const tokenSelect = document.getElementById("tokenSelect");
+         const selectedToken = tokens[tokenSelect.value];
+         const cgID = selectedToken?.cgID || 'mog';
 
-            await fetchPoolData(tokenSelect.value); // recalculate with updated choice
-            drawChart(cgID); // redraw chart with updated exaggeratedMarketCap
+         await fetchPoolData(tokenSelect.value); // recalculate with updated choice
+         drawChart(cgID); // redraw chart with updated exaggeratedMarketCap
          });
-         });
+
 
 
          const COINGECKO_ID = 'mog';
