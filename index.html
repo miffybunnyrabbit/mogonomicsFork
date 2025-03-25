@@ -113,7 +113,7 @@
          <tbody id="resultsTable"></tbody>
       </table>
       <form>
-         <p><strong>Select a percentage:</strong></p>
+         <p><strong>Select a participation rate (usage):</strong></p>
          <select id="percentageSelect">
             <option value="1">1%</option>
             <option value="2">2%</option>
@@ -333,31 +333,48 @@
 
 
          async function drawChart(cgID) {
-            if (!chart) {
-               chart = LightweightCharts.createChart(document.getElementById('chart'), {
-                  width: window.innerWidth,
-                  height: 500,
-                  layout: {
-                     background: { color: '#fff' },
-                     textColor: '#000',
-                  },
-                  grid: {
-                     vertLines: { color: '#eee' },
-                     horzLines: { color: '#eee' },
-                  },
-                  timeScale: {
-                     timeVisible: true,
-                     borderColor: '#D1D4DC',
-                  },
-               });
-               candleSeries = chart.addCandlestickSeries();
-            }
+      if (!chart) {
+         chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            width: window.innerWidth,
+            height: 500,
+            layout: {
+               background: { color: '#fff' },
+               textColor: '#000',
+            },
+            grid: {
+               vertLines: { color: '#eee' },
+               horzLines: { color: '#eee' },
+            },
+            timeScale: {
+               timeVisible: true,
+               borderColor: '#D1D4DC',
+               rightOffset: 0,
+            },
+         });
+         candleSeries = chart.addCandlestickSeries();
+      }
 
-            const candles = await fetchMarketCapCandles(cgID, 'usd', 90);
-            candleSeries.setData(candles);
-            chart.timeScale().scrollToPosition(110, false);
-            chart.timeScale().setVisibleLogicalRange({ from: 0, to: 2000 });
-         }
+      const candles = await fetchMarketCapCandles(cgID, 'usd', 90);
+      candleSeries.setData(candles);
+      
+      
+      if (window.innerWidth < 768) {
+      // Mobile: Fit content so all candles are visible.
+      chart.timeScale().setVisibleLogicalRange({ from: 0, to: 600 });
+    } else {
+      // Desktop: Set a fixed visible logical range.
+      chart.timeScale().setVisibleLogicalRange({ from: 0, to: 2000 });
+    }
+ 
+      
+
+
+
+
+
+   }
+
+
       </script>
    </body>
 </html>
