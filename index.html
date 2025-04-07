@@ -3,13 +3,15 @@
   <head>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-0X6J33J5VV"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());      
       gtag('config', 'G-0X6J33J5VV');
     </script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Primary Meta Tags -->
@@ -39,6 +41,7 @@
           text-align: center;
           background-color: #252525;  /* Black background */
           color: #fff;             /* White text */
+          padding-top: 50px; 
         }
         
         .logo-container {
@@ -54,7 +57,7 @@
         table {
           border-collapse: collapse;
           margin: 20px auto;
-          width: 80%;
+          width: 40%;
           background-color: #111;  /* Dark background for table */
         }
         
@@ -92,8 +95,6 @@
           height: 500px;
         }
       </style>
-
-    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   </head>
 
   <body>
@@ -152,58 +153,9 @@
     </div>
       
 
+    <div id="poolData" style="font-size: 12px; color: #d4d4d4; margin-top: 40px; text-align: center;"></div>
 
-
-    <!-- Token Balance and USD Value Display -->
-    <div id="tokenBalanceSection" style="text-align: center; margin-top: 20px;">
-        <p id="balance">Loading token balance...</p>
-        <p id="usdValue">Loading USD value...</p>
-    </div>
-  
-
-    <!-- Loading Bar Demo section (below the chart) -->
-    <!-- <h2 style="text-align:center;">Loading Bar Demo</h2> -->
-
-    <!-- Inputs for the target progress and the max range -->
-    <div style="text-align:center;">
-      <label for="targetValue">Current pooled amount (usd)</label>
-      <input type="number" id="targetValue" min="1">
-
-      <!-- This input is overwritten by the code, can be read-only -->
-      <label for="maxValue">Target pooled amount (usd)</label>
-      <input type="number" id="maxValue" readonly>
-    </div>
-
-    <div id="myProgress" style="
-      width: 90%;
-      background-color: #1c1c1c;
-      margin: 20px auto;
-      height: 30px;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    ">
-      <div id="myBar" style="
-        height: 100%;
-        width: 0%;
-        background-color: #00ce26;
-        border-radius: 5px;
-        text-align: center;
-        color: #ffffff;
-        line-height: 30px;
-        transition: width 0.1s ease;
-      ">0</div>
-    </div>
-
-
-    <!-- Pledges Section -->
-    <div id="pledgesSection" style="margin-top: 20px;">
-      <h2>Pledges</h2>
-      <ul id="pledgesList"></ul>
-    </div>
-
-    <div id="poolData" style="font-size: 12px; color: #555; margin-top: 40px; text-align: center;"></div>
-
-    <div id="explanation" style="max-width: 600px; margin: 20px auto; text-align: center; font-size: 12px;">
+    <div id="explanation" style="max-width: 600px; color: #4f4f4f;; margin: 20px auto; text-align: center; font-size: 12px;">
       <p>
         This calculator models how IMF Credit—by introducing new buying power—can impact token price and market cap using current liquidity and market data. By adjusting token-WETH balances and simulating different levels of supply participation and buying power, it provides a snapshot of potential market dynamics. These estimates reflect current conditions to help you gauge how shifts in buying power might influence the market.
       </p>
@@ -349,10 +301,6 @@
 
         fetchPoolData(tokenSelect.value);
         drawChart(initialID);
-        displayBalanceAndValue().then(() => {
-            // Wait 500ms after updating the target field before starting the loading bar
-            setTimeout(startLoading, 500);
-        });
 
         tokenSelect.addEventListener("change", function () {
           const selectedToken = tokens[this.value];
@@ -361,8 +309,6 @@
           document.getElementById("status").textContent = "Loading pool data...";
           fetchPoolData(this.value);
           drawChart(cgID);
-          displayBalanceAndValue();
-          startLoading()
         });
       };
 
@@ -374,13 +320,11 @@
 
         await fetchPoolData(tokenSelect.value); // recalculate with updated choice
         drawChart(cgID); // redraw chart with updated exaggeratedMarketCap
-        displayBalanceAndValue();
-        startLoading()
       });
 
       const COINGECKO_ID = 'mog';
       const VS_CURRENCY = 'usd';
-      const DAYS = 90;
+      const DAYS = 30;
 
       async function fetchMarketCapCandles(id, vsCurrency, days) {
         const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=${vsCurrency}&days=${days}`;
@@ -463,171 +407,10 @@
             });
         }
 
-        const candles = await fetchMarketCapCandles(cgID, 'usd', 90);
+        const candles = await fetchMarketCapCandles(cgID, 'usd', 30);
         candleSeries.setData(candles);
         chart.timeScale().fitContent(); 
     }
-
-
-      // Replace with your actual Etherscan API key, contract address, and function details
-      const ETHERSCAN_API_KEY = "UPZ2RN9M1YFYEBM9AF38WHDSZQ1BNKV6GG";
-      const CONTRACT_ADDR     = "0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb";
-      const SUPPLY_COLLATERAL_SELECTOR = "0x238d6579"; // Example 4-byte signature
-      const TARGET_COLLATERAL_TOKEN    = "0xaaee1a9723aadb7afa2810263653a34ba2c21c7a".toLowerCase();
-
-      async function fetchAndPopulatePledges() {
-        try {
-          // 1) Fetch all normal transactions to CONTRACT_ADDR
-          const url = `https://api.etherscan.io/api?module=account&action=txlist` +
-                      `&address=${CONTRACT_ADDR}&startblock=0&endblock=99999999&sort=asc` +
-                      `&apikey=${ETHERSCAN_API_KEY}`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-
-          if (data.status !== "1" || !data.result) {
-            console.log("No matching transactions or API error:", data.message);
-            return;
-          }
-
-          // 2) Filter transactions that called supplyCollateral(...)
-          //    with second argument = TARGET_COLLATERAL_TOKEN
-          const callersSet = new Set();
-          for (const tx of data.result) {
-            // Only consider successful txns that have input data
-            if (tx.isError === "0" && tx.input && tx.input.startsWith(SUPPLY_COLLATERAL_SELECTOR)) {
-              // Remove '0x' for slicing
-              const inputNoPrefix = tx.input.slice(2);
-              // 4-byte selector = first 8 hex chars, so second argument is in bytes [72..136]
-              const arg2_32bytes = inputNoPrefix.slice(72, 136);
-              // Last 20 bytes is the actual address
-              const arg2_address = "0x" + arg2_32bytes.slice(24).toLowerCase();
-
-              if (arg2_address === TARGET_COLLATERAL_TOKEN) {
-                callersSet.add(tx.from.toLowerCase());
-              }
-            }
-          }
-
-          // 3) Populate <ul> with the addresses
-          const pledgesList = document.getElementById("pledgesList");
-          pledgesList.innerHTML = ""; // clear old content if any
-          callersSet.forEach(addr => {
-            const li = document.createElement("li");
-            li.textContent = addr;
-            pledgesList.appendChild(li);
-          });
-
-          console.log("Pledge addresses found:", [...callersSet]);
-        } catch (err) {
-          console.error("Error while fetching pledges:", err);
-        }
-      }
-
-      // Run once the page loads
-      window.addEventListener("load", fetchAndPopulatePledges);
-      let interval;
-      function startLoading() {
-        clearInterval(interval);
-
-        const bar = document.getElementById("myBar");
-
-        // "targetValue" is the user’s chosen goal
-        const targetValue = parseFloat(document.getElementById("targetValue").value);
-
-        // "maxValue" now matches the 'New Buying Power' from the table
-        const maxValue    = parseFloat(document.getElementById("maxValue").value);
-
-        // Reset the bar
-        let progress = 0;
-        bar.style.width = "0%";
-        bar.innerText   = "0";
-
-        interval = setInterval(() => {
-          // Stop if we've hit or exceeded the target
-          if (progress >= targetValue) {
-            clearInterval(interval);
-            bar.innerText = String(targetValue);
-
-            // Final width = (targetValue / maxValue) * 100
-            const finalRatio = Math.floor((targetValue / maxValue) * 100);
-            bar.style.width = (finalRatio > 100 ? 100 : finalRatio) + "%";
-          } else {
-            progress+=200000;
-            // Calculate progress ratio
-            const ratio = Math.floor((progress / maxValue) * 100);
-            const displayRatio = ratio > 100 ? 100 : ratio;
-            bar.style.width = displayRatio + "%";
-
-            // Show the numeric progress in the bar text
-            bar.innerText = String(progress);
-          }
-        }, 30);
-      }
-      // --- Configuration for Token Balance ---
-const apiKey = "UPZ2RN9M1YFYEBM9AF38WHDSZQ1BNKV6GG"; // Your Etherscan API key
-const tokenAddress = "0xaaee1a9723aadb7afa2810263653a34ba2c21c7a".toLowerCase(); // Use the appropriate token address
-const walletAddress = "0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb"; // Your wallet/contract address
-const decimals = 18; // Adjust if your token uses a different number of decimals
-
-async function fetchTokenBalance() {
-  try {
-    const etherscanUrl = `https://api.etherscan.io/api?module=account&action=tokenbalance` +
-                           `&contractaddress=${tokenAddress}&address=${walletAddress}` +
-                           `&tag=latest&apikey=${apiKey}`;
-    const response = await fetch(etherscanUrl);
-    const data = await response.json();
-    if (data.status === "1") {
-      // data.result is in the token's smallest unit
-      const rawBalance = data.result;
-      const balance = Number(rawBalance) / Math.pow(10, decimals);
-      document.getElementById("balance").innerText = `Current Amount of MOG pooled: ${balance}`;
-      return balance;
-    } else {
-      document.getElementById("balance").innerText = "Error: " + data.message;
-      return null;
-    }
-  } catch (error) {
-    console.error("Error fetching token balance:", error);
-    document.getElementById("balance").innerText = "Error loading balance.";
-    return null;
-  }
-}
-
-async function fetchTokenPrice() {
-// Use Coingecko's simple token price endpoint
-const coingeckoUrl = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${tokenAddress}&vs_currencies=usd`;
-try {
-    const response = await fetch(coingeckoUrl);
-    const data = await response.json();
-    const priceInfo = data[tokenAddress];
-    if (priceInfo && priceInfo.usd) {
-    return priceInfo.usd;
-    } else {
-    console.error("Price info not found", data);
-    return null;
-    }
-} catch (error) {
-    console.error("Error fetching token price:", error);
-    return null;
-}
-}
-
-async function displayBalanceAndValue() {
-const balance = await fetchTokenBalance();
-if (balance === null) return;
-const price = await fetchTokenPrice();
-if (price === null) {
-    document.getElementById("usdValue").innerText = "Error loading token price.";
-    return;
-}
-const usdValue = balance * price;
-document.getElementById("usdValue").innerText = `USD Value: $${usdValue.toFixed(2)}`;
-
-// Optionally update the "targetValue" input with the computed USD value:
-document.getElementById("targetValue").value = usdValue.toFixed(2);
-}
-
-
     </script>
   </body>
 </html>
